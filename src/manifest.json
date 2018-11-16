@@ -1,8 +1,8 @@
 {
-  "name": "Chrome Extension Webpack",
+  "name": "IntelliGest",
   "options_page": "options.html",
   "background": {
-    "page": "background.html"
+    "script": "background.js"
   },
   "browser_action": {
     "default_popup": "popup.html",
@@ -11,6 +11,14 @@
   "icons": {
     "128": "icon-128.png"
   },
+  "permissions": [
+	  "videoCapture",
+	  "storage",
+	  "declarativeContent",
+	  "activeTab",
+	  "tabs",
+	  "downloads"
+  ]
   "manifest_version": 2,
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
