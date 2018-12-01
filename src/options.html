@@ -16,10 +16,44 @@
     .row {
       margin-top: 5px;
     }
-    
+
     .loading {
-      display: block;
+      /* display: block; */
+	  width: 100%;
+	  height: 100%;
+	  position: fixed;
+	  top: 0;
+	  right: 0;
+	  bottom: 0;
+	  left: 0;
+	  background-color: rgba(0,0,0,.5);
     }
+	#loading-overlay {
+	  width: 20px;
+	  height: 20px;
+	  margin-top: -40px;
+	  margin-left: -40px;
+
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+
+	  border-width: 30px;
+	  border-radius: 50%;
+	  -webkit-animation: spin 1s linear infinite;
+	}
+	.style-2 #loading-overlay {
+	  border-style: double;
+	  border-color: #ccc transparent;
+	}
+	@-webkit-keyframes spin {
+	  0% {
+	    -webkit-transform: rotate(0);
+	  }
+	  100% {
+	    -webkit-transform: rotate(-360deg);
+	  }
+	}
   </style>
 </head>
 
@@ -27,7 +61,7 @@
   <!-- TODO: make this a fullpage overlay with a nice loading gif -->
   <!-- once mobilenet loads (in the init function of options.js) -->
   <!-- the display style will be set to none -->
-  <div class="loading" id="loading-overlay">Loading mobilenet...</div>
+  <div class="loading style-2" id="loading-overlay">Loading mobilenet...</div>
   <div class="container">
     <div class="row">
       <div class="col-md-12" style="text-align:center">
