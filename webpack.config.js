@@ -90,7 +90,7 @@ var options = {
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "src", "demo.html"),
       filename: "demo.html",
-      chunks: ["demo"]
+      chunks: ["predict"]
     }),
     new WriteFilePlugin()
   ]

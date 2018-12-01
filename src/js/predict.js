@@ -1,39 +1,22 @@
 import * as tf from '@tensorflow/tfjs';
-import { Webcam } from './webcam.js';
+import {
+	Webcam
+} from './webcam.js';
 
 let model;
 let mobilenet;
 
 var video = document.getElementById('video');
-
-var options = {
-	video: true,
-	audio: false
-};
-
-var recorder;
-
-navigator.webkitGetUserMedia(options, function (stream) {
-	video.src = window.URL.createObjectURL(stream);
-	video.srcObject = stream;
-	recorder = new MediaRecorder(stream);
-	recorder.ondataavailable = function (e) {
-		console.log(e.data.size);
-	};
-	recorder.start(5000);
-	video.play();
-}, function (e) {
-	alert(e);
-});
-
 const webcam = new Webcam(video);
-
 
 async function loadMobileNet() {
 	const mobile = await tf.loadModel(
 		'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
 	const layer = mobile.getLayer('conv_pw_13_relu');
-	return tf.model({ inputs: mobile.inputs, outputs: layer.output });
+	return tf.model({
+		inputs: mobile.inputs,
+		outputs: layer.output
+	});
 }
 
 async function predict() {
@@ -46,15 +29,13 @@ async function predict() {
 		});
 
 		var probabilities = (await prediction.data());
-		var max = Math.max(...probabilities);
-		var direction = probability.indexOf(max);
-		// threshold values for executing actions
-		// probability must exceed the threshold for the given
-		// action to execute
+		var maxProb = Math.max(...probabilities);
+		var maxIndex = probabilities.indexOf(maxProb);
+		// threshold values for executing actions probability 
+		// must exceed the threshold for the given action to execute
 		const thresholds = [0.7, 0.5, 0.7];
-		if (max >= threshold[direction]) {
-			var direction = probabilities.indexOf(max);
-			switch (direction) {
+		if (maxProb >= thresholds[maxIndex]) {
+			switch (maxIndex) {
 				case 0:
 					// scroll up
 					window.scrollBy(0, -20);
@@ -82,7 +63,9 @@ async function init() {
 	}
 	model = await tf.loadModel('indexeddb://model-intelligest');
 	mobilenet = await loadMobileNet();
-	document.getElementById('status').style.display = 'none';
+	// hide loader
+	document.getElementById('loading-status').style.display = 'none';
+
 	tf.tidy(() => mobilenet.predict(webcam.capture()));
 	predict();
 }

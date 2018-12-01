@@ -1,25 +1,11 @@
 import * as tf from '@tensorflow/tfjs';
 
 const CONTROLS = ['up', 'neutral', 'down'];
-
-const statusElement = document.getElementById('status');
 const trainStatusElement = document.getElementById('train-status');
 
-export function init() {
-  document.getElementById('controller').style.display = '';
-  statusElement.style.display = 'none';
-}
-
-export function isPredicting() {
-  statusElement.style.visibility = 'visible';
-}
-export function donePredicting() {
-  statusElement.style.visibility = 'hidden';
-}
 export function trainStatus(status) {
   trainStatusElement.innerText = status;
 }
-
 export let addExampleHandler;
 export function setExampleHandler(handler) {
   addExampleHandler = handler;
@@ -42,7 +28,13 @@ async function handler(label) {
   while (mouseDown) {
     addExampleHandler(label);
     document.body.setAttribute('data-active', CONTROLS[label]);
-    total.innerText = totals[label]++;
+
+    if (totals[label] == 1) {
+      total.innerText = totals[label]++ + " Example";
+    } else {
+      total.innerText = totals[label]++ + " Examples";
+    }
+
     await tf.nextFrame();
   }
   document.body.removeAttribute('data-active');

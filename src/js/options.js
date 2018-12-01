@@ -1,31 +1,15 @@
 import "../css/options.css";
-import {ControllerDataset} from './controller';
-import {Webcam} from './webcam';
+import {
+  ControllerDataset
+} from './controller';
+import {
+  Webcam
+} from './webcam';
 import * as ui from './training';
 
+import * as tf from '@tensorflow/tfjs';
+
 var video = document.getElementById('video');
-
-var options = {
-    video:true,
-    audio:false
-};
-
-var recorder;
-
-navigator.webkitGetUserMedia(options, function(stream) {
-    video.src = window.URL.createObjectURL(stream);
-    video.srcObject = stream;
-    recorder = new MediaRecorder(stream);
-    recorder.ondataavailable = function(e) {
-        console.log(e.data.size);
-    };
-    recorder.start(5000);
-    video.play();
-}, function(e) {
-    alert(e);
-});
-
-
 // The number of classes we want to predict. In this example, we will be
 // predicting 3 classes for scrolling up and down, and doing nothing
 const NUM_CLASSES = 3;
@@ -43,11 +27,14 @@ let mdl;
 // we'll use as input to our classifier model.
 async function loadMobilenet() {
   const mobilenet = await tf.loadModel(
-      'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
 
   // Return a model that outputs an internal activation.
   const layer = mobilenet.getLayer('conv_pw_13_relu');
-  return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
+  return tf.model({
+    inputs: mobilenet.inputs,
+    outputs: layer.output
+  });
 }
 
 // When the UI buttons are pressed, read a frame from the webcam and associate
@@ -79,7 +66,9 @@ async function train() {
       // Flattens the input to a vector so we can use it in a dense layer. While
       // technically a layer, this only performs a reshape (and has no training
       // parameters).
-      tf.layers.flatten({inputShape: [7, 7, 256]}),
+      tf.layers.flatten({
+        inputShape: [7, 7, 256]
+      }),
       // Layer 1
       tf.layers.dense({
         // number of hidden units
@@ -106,27 +95,25 @@ async function train() {
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
   // class), versus the label (100% probability in the true class)>
-  mdl.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
+  mdl.compile({
+    optimizer: optimizer,
+    loss: 'categoricalCrossentropy'
+  });
 
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends onhow many examples the user
   // collects. This allows us to have a flexible batch size.
   const batchSize =
-      Math.floor(controllerDataset.xs.shape[0] * 0.4);
+    Math.floor(controllerDataset.xs.shape[0] * 0.4);
   if (!(batchSize > 0)) {
     throw new Error(
-        `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
+      `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
   }
 
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
   mdl.fit(controllerDataset.xs, controllerDataset.ys, {
     batchSize,
-    epochs: 20,
-    callbacks: {
-      onBatchEnd: async (batch, logs) => {
-        ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
-      }
-    }
+    epochs: 20
   });
   await mdl.save('indexeddb://model-intelligest');
 }
@@ -165,6 +152,7 @@ document.getElementById('train').addEventListener('click', async () => {
   await tf.nextFrame();
   isPredicting = false;
   train();
+  ui.trainStatus('Model saved')
 });
 
 async function init() {
@@ -175,12 +163,12 @@ async function init() {
     document.getElementById('no-webcam').style.display = 'block';
   }
   mnet = await loadMobilenet();
+  // hide loading screen once mobilenet is loaded
+  document.getElementById('loading-overlay').style.display = 'none';
   // Warm up the model. This uploads weights to the GPU and compiles the WebGL
   // programs so the first time we collect data from the webcam it will be
   // quick.
   tf.tidy(() => mnet.predict(webcam.capture()));
-
-  ui.init();
 }
 
 init();

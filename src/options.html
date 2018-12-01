@@ -1,24 +1,96 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>IntelliGest Options</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <style>
+    .thumb {
+      border: 2px solid #d3d3d3;
+      border-radius: 15px;
+    }
+    .webcam {
+      border: 2px solid #d3d3d3;
+    }
+    .row {
+      margin-top: 5px;
+    }
+    
+    .loading {
+      display: block;
+    }
+  </style>
 </head>
+
 <body>
-  <video id="video" width="640" height="480" autoplay></video>
-  <canvas id="canvas" width="640" height="480"></canvas>
+  <!-- TODO: make this a fullpage overlay with a nice loading gif -->
+  <!-- once mobilenet loads (in the init function of options.js) -->
+  <!-- the display style will be set to none -->
+  <div class="loading" id="loading-overlay">Loading mobilenet...</div>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12" style="text-align:center">
+        <video autoplay playsinline muted class="webcam" id="video" width="224" height="224"></video>
+      </div>
+    </div>
+    <!-- TODO: information panel with how to use -->
 
-  <div id="status">Loading mobilenet...</div>
-
-  <!-- information panel with how to use -->
-
-  <!-- control button -->
-  <!-- button with id train -->
+    <!-- control button -->
+    <!-- button with id train -->
     <!-- nested span with id train-status -->
-
-  <!-- test button that opens the demo page -->
-
+    <!-- test button that opens the demo page -->
+    <div class="row">
+      <div class="col-md-3 col-md-offset-3" style="text-align:center">
+        <button type="button" style="width:100%" class="btn btn-primary" id="train">
+          <span id="train-status">Train Model</span>
+        </button>
+      </div>
+      <div class="col-md-3" style="text-align:center">
+        <button type="button" style="width:100%" class="btn btn-success">
+          <a href="demo.html" style="color: #fff; text-decoration:  none;">Test Model</a>
+        </button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4" style="text-align:center">
+        <div class="row">Scroll up</div>
+        <div class="row">
+          <canvas class="thumb" id="up-thumb" width="225px" height="225px"></canvas>
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-danger" id="up">Add Example</button>
+        </div>
+        <div class="row">
+          <span id="up-total">0 Examples</span>
+        </div>
+      </div>
+      <div class="col-md-4" style="text-align:center">
+        <div class="row">Do nothing</div>
+        <div class="row">
+          <canvas class="thumb" id="neutral-thumb" width="225px" height="225px"></canvas>
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-danger" id="neutral">Add Example</button>
+        </div>
+        <div class="row">
+          <span id="neutral-total">0 Examples</span>
+        </div>
+      </div>
+      <div class="col-md-4" style="text-align:center">
+        <div class="row">Scroll down</div>
+        <div class="row">
+          <canvas class="thumb" id="down-thumb" width="225px" height="225px"></canvas>
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-danger" id="down">Add Example</button>
+        </div>
+        <div class="row">
+          <span id="down-total">0 Examples</span>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- canvas with id up-thumb -->
   <!-- button with id up-->
   <!-- span with id up-total -->
@@ -31,6 +103,6 @@
   <!-- button with id down -->
   <!-- span with id down-total -->
 
-  <script src="options.js"></script>
 </body>
+
 </html>
