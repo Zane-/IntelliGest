@@ -1,36 +1,13 @@
 import * as tf from '@tensorflow/tfjs';
 
-const CONTROLS = ['up', 'down', 'left', 'right'];
-const CONTROL_CODES = [38, 40, 37, 39];
+const CONTROLS = ['up', 'down', 'neutral'];
+
+const statusElement = document.getElementById('status');
+const trainStatusElement = document.getElementById('train-status');
 
 export function init() {
   document.getElementById('controller').style.display = '';
   statusElement.style.display = 'none';
-}
-
-const trainStatusElement = document.getElementById('train-status');
-
-// Set hyper params from UI values.
-const learningRateElement = document.getElementById('learningRate');
-export const getLearningRate = () => +learningRateElement.value;
-
-const batchSizeFractionElement = document.getElementById('batchSizeFraction');
-export const getBatchSizeFraction = () => +batchSizeFractionElement.value;
-
-const epochsElement = document.getElementById('epochs');
-export const getEpochs = () => +epochsElement.value;
-
-const denseUnitsElement = document.getElementById('dense-units');
-export const getDenseUnits = () => +denseUnitsElement.value;
-const statusElement = document.getElementById('status');
-
-// export function startPacman() {
-//   google.pacman.startGameplay();
-// }
-
-export function predictClass(classId) {
-  google.pacman.keyPressed(CONTROL_CODES[classId]);
-  document.body.setAttribute('data-active', CONTROLS[classId]);
 }
 
 export function isPredicting() {
@@ -49,12 +26,11 @@ export function setExampleHandler(handler) {
 }
 
 let mouseDown = false;
-const totals = [0, 0, 0, 0];
+const totals = [0, 0, 0];
 
 const upButton = document.getElementById('up');
 const downButton = document.getElementById('down');
-const leftButton = document.getElementById('left');
-const rightButton = document.getElementById('right');
+const neutralButton = document.getElementById('neutral');
 
 const thumbDisplayed = {};
 
@@ -78,11 +54,9 @@ upButton.addEventListener('mouseup', () => mouseDown = false);
 downButton.addEventListener('mousedown', () => handler(1));
 downButton.addEventListener('mouseup', () => mouseDown = false);
 
-leftButton.addEventListener('mousedown', () => handler(2));
-leftButton.addEventListener('mouseup', () => mouseDown = false);
+neutralButton.addEventListener('mousedown', () => handler(2));
+neutralButton.addEventListener('mouseup', () => mouseDown = false);
 
-rightButton.addEventListener('mousedown', () => handler(3));
-rightButton.addEventListener('mouseup', () => mouseDown = false);
 
 export function drawThumb(img, label) {
   if (thumbDisplayed[label] == null) {

@@ -3,7 +3,7 @@ import {ControllerDataset} from './controller';
 import {Webcam} from './webcam';
 import * as ui from './training';
 
-var video = document.getElementById('webcam');
+var video = document.getElementById('video');
 
 var options = {
     video:true,
@@ -27,8 +27,8 @@ navigator.webkitGetUserMedia(options, function(stream) {
 
 
 // The number of classes we want to predict. In this example, we will be
-// predicting 4 classes for up, down, left, and right.
-const NUM_CLASSES = 4;
+// predicting 3 classes for scrolling up and down, and doing nothing
+const NUM_CLASSES = 3;
 
 // A webcam class that generates Tensors from the images from the webcam.
 const webcam = new Webcam(video);
@@ -82,7 +82,8 @@ async function train() {
       tf.layers.flatten({inputShape: [7, 7, 256]}),
       // Layer 1
       tf.layers.dense({
-        units: ui.getDenseUnits(),
+        // number of hidden units
+        units: 100,
         activation: 'relu',
         kernelInitializer: 'varianceScaling',
         useBias: true
@@ -99,7 +100,8 @@ async function train() {
   });
 
   // Creates the optimizers which drives training of the model.
-  const optimizer = tf.train.adam(ui.getLearningRate());
+  // 0.0001 is the learning rate
+  const optimizer = tf.train.adam(0.0001);
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
@@ -110,7 +112,7 @@ async function train() {
   // number of examples that are collected depends onhow many examples the user
   // collects. This allows us to have a flexible batch size.
   const batchSize =
-      Math.floor(controllerDataset.xs.shape[0] * ui.getBatchSizeFraction());
+      Math.floor(controllerDataset.xs.shape[0] * 0.4);
   if (!(batchSize > 0)) {
     throw new Error(
         `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
@@ -119,7 +121,7 @@ async function train() {
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
   mdl.fit(controllerDataset.xs, controllerDataset.ys, {
     batchSize,
-    epochs: ui.getEpochs(),
+    epochs: 20,
     callbacks: {
       onBatchEnd: async (batch, logs) => {
         ui.trainStatus('Loss: ' + logs.loss.toFixed(5));
@@ -137,15 +139,12 @@ async function predict() {
     const predictedClass = tf.tidy(() => {
       // Capture the frame from the webcam.
       const img = webcam.capture();
-
       // Make a prediction through mobilenet, getting the internal activation of
       // the mobilenet model.
       const activation = mnet.predict(img);
-
       // Make a prediction through our newly-trained model using the activation
       // from mobilenet as input.
       const predictions = mdl.predict(activation);
-
       // Returns the index with the maximum probability. This number corresponds
       // to the class the model thinks is the most probable given the input.
       return predictions.as1D().argMax();
@@ -172,10 +171,10 @@ async function init() {
   try {
     await webcam.setup();
   } catch (e) {
+    // div with id 'no-webcam' can be added to be shown when user does not have a webcam
     document.getElementById('no-webcam').style.display = 'block';
   }
   mnet = await loadMobilenet();
-
   // Warm up the model. This uploads weights to the GPU and compiles the WebGL
   // programs so the first time we collect data from the webcam it will be
   // quick.
