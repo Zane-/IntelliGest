@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-const CONTROLS = ['up', 'down', 'neutral'];
+const CONTROLS = ['up', 'neutral', 'down'];
 
 const statusElement = document.getElementById('status');
 const trainStatusElement = document.getElementById('train-status');
@@ -29,8 +29,8 @@ let mouseDown = false;
 const totals = [0, 0, 0];
 
 const upButton = document.getElementById('up');
-const downButton = document.getElementById('down');
 const neutralButton = document.getElementById('neutral');
+const downButton = document.getElementById('down');
 
 const thumbDisplayed = {};
 
@@ -51,11 +51,11 @@ async function handler(label) {
 upButton.addEventListener('mousedown', () => handler(0));
 upButton.addEventListener('mouseup', () => mouseDown = false);
 
-downButton.addEventListener('mousedown', () => handler(1));
-downButton.addEventListener('mouseup', () => mouseDown = false);
-
-neutralButton.addEventListener('mousedown', () => handler(2));
+neutralButton.addEventListener('mousedown', () => handler(1));
 neutralButton.addEventListener('mouseup', () => mouseDown = false);
+
+downButton.addEventListener('mousedown', () => handler(2));
+downButton.addEventListener('mouseup', () => mouseDown = false);
 
 
 export function drawThumb(img, label) {

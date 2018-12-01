@@ -47,15 +47,23 @@ async function predict() {
 
 		var probabilities = (await prediction.data());
 		var max = Math.max(...probabilities);
-		if (max >= 0.7) {
+		var direction = probability.indexOf(max);
+		// threshold values for executing actions
+		// probability must exceed the threshold for the given
+		// action to execute
+		const thresholds = [0.7, 0.5, 0.7];
+		if (max >= threshold[direction]) {
 			var direction = probabilities.indexOf(max);
 			switch (direction) {
 				case 0:
+					// scroll up
 					window.scrollBy(0, -20);
 					break;
 				case 1:
+					// neutral gesture detected, do nothing
 					break;
 				case 2:
+					// scroll down
 					window.scrollBy(0, 20);
 					break;
 			}
