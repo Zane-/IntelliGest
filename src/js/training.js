@@ -2,17 +2,23 @@ import * as tf from '@tensorflow/tfjs';
 
 const CONTROLS = ['up', 'neutral', 'down'];
 const trainStatusElement = document.getElementById('train-status');
+const errorTextElement = document.getElementById('error-text');
 
 export function trainStatus(status) {
   trainStatusElement.innerText = status;
 }
+
+export function setErrorText(text) {
+  errorTextElement.innerText = text;
+}
+
 export let addExampleHandler;
 export function setExampleHandler(handler) {
   addExampleHandler = handler;
 }
 
 let mouseDown = false;
-const totals = [0, 0, 0];
+export const totals = [0, 0, 0];
 
 const upButton = document.getElementById('up');
 const neutralButton = document.getElementById('neutral');

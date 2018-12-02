@@ -54,17 +54,30 @@ async function predict() {
 	}
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function loadModel() {
+	try {
+		model = await tf.loadModel('indexeddb://model-intelligest');
+	} catch (e) {
+		alert('No model saved, press "Ok" to be redirected to options...');
+		window.location = './options.html';
+	}
+	return model;
+}
 async function init() {
 	try {
 		await webcam.setup();
 	} catch (e) {
-		// div with id 'no-webcam' can be added to be shown when user does not have a webcam
-		document.getElementById('no-webcam').style.display = 'block';
+		alert('No webcam detected. You must have a webcam enabled to use this extension. Please enable a webcam and press "Ok"');
+		location.reload();
 	}
-	model = await tf.loadModel('indexeddb://model-intelligest');
+	model = await loadModel();
 	mobilenet = await loadMobileNet();
 	// hide loader
-	document.getElementById('loading-status').style.display = 'none';
+	document.getElementById('loading-overlay').style.display = 'none';
 
 	tf.tidy(() => mobilenet.predict(webcam.capture()));
 	predict();

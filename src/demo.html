@@ -13,10 +13,55 @@
 			top: 0;
 			left: 0;
 		}
+
+		.loading {
+			width: 100%;
+			height: 100%;
+			position: fixed;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			background-color: rgba(255, 255, 255, .9);
+			z-index: 9999;
+		}
+
+		#spinner {
+			width: 20px;
+			height: 20px;
+			margin-top: -40px;
+			margin-left: -40px;
+
+			position: absolute;
+			top: 50%;
+			left: 50%;
+
+			border-width: 30px;
+			border-radius: 50%;
+			-webkit-animation: spin 1s linear infinite;
+		}
+
+		.style-2 #spinner {
+			border-style: double;
+			border-color: #000 transparent;
+		}
+
+		@-webkit-keyframes spin {
+			0% {
+				-webkit-transform: rotate(0);
+			}
+			100% {
+				-webkit-transform: rotate(-360deg);
+			}
+		}
 	</style>
 </head>
 
 <body>
+	<div id="loading-overlay" class="loading style-2">
+			<div id="spinner"></div>
+	</div>
+	
 	<div class="container" style="z-index: -1;">
 		<div class="row">
 			<div class="col-md-12" style="text-align: center;">
@@ -24,7 +69,6 @@
 			</div>
 		</div>
 	</div>
-	<div id="loading-status">Loading mobilenet...</div>
 
 	<h1>The AI Revolution: The Road to Superintelligence</h1>
 	<h1>

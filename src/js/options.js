@@ -1,10 +1,6 @@
 import "../css/options.css";
-import {
-  ControllerDataset
-} from './controller';
-import {
-  Webcam
-} from './webcam';
+import {ControllerDataset} from './controller';
+import {Webcam} from './webcam';
 import * as ui from './training';
 
 import * as tf from '@tensorflow/tfjs';
@@ -55,7 +51,16 @@ ui.setExampleHandler(label => {
  */
 async function train() {
   if (controllerDataset.xs == null) {
+    ui.trainStatus('Train Model');
+    ui.setErrorText('Add some examples before training!');  
     throw new Error('Add some examples before training!');
+  }
+  for (var i = 0; i < ui.totals.length; i++) {
+    if (ui.totals[i] == 0) {
+      ui.trainStatus('Train Model');
+      ui.setErrorText('Add at least one example for each action!');
+      throw new Error('Add at least one example for each action!');
+    }
   }
 
   // Creates a 2-layer fully connected model. By creating a separate model,
@@ -103,8 +108,7 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends onhow many examples the user
   // collects. This allows us to have a flexible batch size.
-  const batchSize =
-    Math.floor(controllerDataset.xs.shape[0] * 0.4);
+  const batchSize = Math.floor(controllerDataset.xs.shape[0] * 0.4);
   if (!(batchSize > 0)) {
     throw new Error(
       `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
@@ -147,21 +151,32 @@ async function predict() {
 }
 
 document.getElementById('train').addEventListener('click', async () => {
+  ui.setErrorText('');
   ui.trainStatus('Training...');
   await tf.nextFrame();
   await tf.nextFrame();
   isPredicting = false;
-  train();
+  await train();
   ui.trainStatus('Model saved')
 });
+
+document.getElementById('test-model').addEventListener('click', async() => {
+  try {
+    let model = await tf.loadModel('indexeddb://model-intelligest');
+    window.location = './demo.html';
+	} catch (e) {
+		ui.setErrorText('No model saved, please train a model to test it.');
+  }
+})
 
 async function init() {
   try {
     await webcam.setup();
   } catch (e) {
-    // div with id 'no-webcam' can be added to be shown when user does not have a webcam
-    document.getElementById('no-webcam').style.display = 'block';
+   	alert('No webcam detected. You must have a webcam enabled to use this extension. Please enable a webcam and press "Ok"');
+		location.reload();
   }
+
   mnet = await loadMobilenet();
   // hide loading screen once mobilenet is loaded
   document.getElementById('loading-overlay').style.display = 'none';
