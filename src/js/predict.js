@@ -55,7 +55,7 @@ async function loadMobileNet() {
 	});
 }
 
-async function init() {
+export async function init() {
 	try {
 		await webcam.setup();
 	} catch (e) {
@@ -66,7 +66,7 @@ async function init() {
 	mobilenet = await loadMobileNet();
 	// hide loader
 	document.getElementById('loading-overlay').style.display = 'none';
-
+	console.log(gestures);
 	// warm up model
 	tf.tidy(() => mobilenet.predict(webcam.capture()));
 	predict();

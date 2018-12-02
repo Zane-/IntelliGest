@@ -19,8 +19,8 @@ let totals = [0];
 let thumbDisplayed = {};
 let mouseDown = false;
 var controllers = [];
-let mnet;
-let mdl;
+var mnet;
+var mdl;
 
 // add listeners to dropdown buttons to add component to gestures table
 document.getElementById('add-scroll-up').addEventListener('click', () => addGesture('scroll-up', 'Scroll up'));
@@ -61,11 +61,11 @@ function setHidden(element, bool) {
   }
 }
 
-function setTrainStatus(status) {  
+function setTrainStatus(status) {
   trainStatusElement.innerText = status;
 }
 
-function setErrorText(text) { 
+function setErrorText(text) {
   errorTextElement.innerText = text;
 }
 
@@ -81,9 +81,9 @@ function startTraining() {
   setHidden("gestures-dropdown", true);
   document.getElementById('train-btn-col').classList.add('offset-md-4');
 
-  let numGestures = gestures.length;
+  const numGestures = gestures.length;
   // unhide all the add example buttons
-  for (var i = 0; i < numGestures; i++) {
+  for (let i = 0; i < numGestures; i++) {
     let id = gestures[i];
     setHidden(id, false);
     setHidden(id+'-total', false);
@@ -93,11 +93,10 @@ function startTraining() {
     elem.addEventListener('mousedown', () => handler(labelIndex));
     elem.addEventListener('mouseup', () => mouseDown = false);
   }
-   
   controllers.push(new ControllerDataset(numGestures));
   trainButton.removeEventListener('click', this);
   setTrainStatus("Train model");
-  
+
   trainButton.addEventListener('click', async() =>  {
     setErrorText('No errors to report.');
     setTrainStatus('Training...');
@@ -115,7 +114,7 @@ function addGesture(label, title) {
   // clone the original neutral gesture
   let newGesture = neutralGesture.cloneNode(true);
   newGesture.id = label + '-gesture';
-  // array of the four rows in a gesture 
+  // array of the four rows in a gesture
   // set ids to the correct label
   let rows = newGesture.childNodes;
   rows[1].innerText = title;
@@ -148,7 +147,7 @@ async function handler(label) {
     });
     document.body.setAttribute('data-active', gestures[label]);
     let text = (totals[label] == 1) ? " Example" : " Examples";
-    total.innerText = totals[label]++ + text;
+    total.innerText = ++totals[label] + text;
 
     await tf.nextFrame();
   }
@@ -184,13 +183,13 @@ async function train() {
   if (controllers[0].xs == null) {
     window.scrollTo(0, 0);
     setTrainStatus('Train model');
-    setErrorText('Add some examples before training!');  
+    setErrorText('Add some examples before training!');
     throw new Error('Add some examples before training!');
   }
-  for (var i = 0; i < totals.length; i++) {
+  for (let i = 0; i < totals.length; i++) {
     if (totals[i] < 100) {
       window.scrollTo(0, 0);
-      trainStatus('Train model');
+      setTrainStatus('Train model');
       setErrorText('Add at least 100 examples for each gesture!');
       throw new Error('Add at least 100 examples for each gesture!');
       break;
@@ -212,7 +211,7 @@ async function train() {
       // Layer 1
       tf.layers.dense({
         // number of hidden units
-        units: 100,
+        units: 30,
         activation: 'relu',
         kernelInitializer: 'varianceScaling',
         useBias: true
@@ -230,7 +229,7 @@ async function train() {
 
   // Creates the optimizers which drives training of the model.
   // 0.0001 is the learning rate
-  const optimizer = tf.train.adam(0.0001);
+  const optimizer = tf.train.adam(0.001);
   // We use categoricalCrossentropy which is the loss function we use for
   // categorical classification which measures the error between our predicted
   // probability distribution over classes (probability that an input is of each
@@ -243,19 +242,21 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends onhow many examples the user
   // collects. This allows us to have a flexible batch size.
-  const batchSize = Math.floor(controllers[0].xs.shape[0] * 0.4);
+  const batchSize = Math.floor(controllers[0].xs.shape[0]);
 
   mdl.fit(controllers[0].xs, controllers[0].ys, {
     batchSize,
-    epochs: 60
+    epochs: 10
   });
   await mdl.save('indexeddb://model-intelligest');
 }
 
 // Loads mobilenet and returns a model
 async function loadMobilenet() {
-  const mobilenet = await tf.loadModel(
-    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+  const mobilenet = await tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+  // mobilenetv2
+  // const mobilenet = await tf.loadModel('http://zane-.github.io/tfjs/mobilenetv2/model.json');
+  console.log(mobilenet.layers);
   const layer = mobilenet.getLayer('conv_pw_13_relu');
   return tf.model({
     inputs: mobilenet.inputs,
