@@ -4,71 +4,89 @@
 <head>
   <title>IntelliGest Options</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" 
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" 
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" 
+        crossorigin="anonymous">
 </head>
 
 <body>
   <div id="loading-overlay" class="loading style-2">
       <div id="spinner"></div>
   </div>
-  <div class="jumbotron vertical-center">
-  <div class="container">
+  <div class="container border" style="margin:10 0;">
     <div class="row">
-      <div class="col-md-12" style="text-align:center">
-        <video autoplay playsinline muted class="webcam" id="video" width="224" height="224"></video>
+      <div class="col-8 info-box" style="overflow:auto;">
+        <h3 style="text-align:center;">
+            IntelliGest
+            <small class="text-muted">Getting started</small>
+        </h3>
+        <h6>Adding new gestures</h6>
+        <p>To add other gestures, click the "Add Gesture" dropdown menu, and click the action you would like to add. A new box
+            will appear on the screen representing that gesture.
+        <h6>Beginning training</h6>
+        <p>Once you have added at least one other gesture, you can begin training. Click the "Start training" button to continue.</p>
+        <h6>Adding examples</h6>
+        <p>After the "Start training" button is pressed, a new "Add example" button should appear, allowing you to add examples from your
+        webcam for each gesture. Tap and hold to continuously add examples. Capture different angles and positions to add accuracy. The more examples the better, 
+        but more memory is used.</p>  
+        <h6>Do nothing gesture</h6>
+        <p>The "Do nothing" gesture is the one required gesture. It will perform no browser action. This gesture should simply be what your webcam
+        view is when you do not intend to execute any gestures.</p>
+        <h6>Training and Testing</h6>
+        <p>Once you are finished adding examples, click "Train model" to train the neural network. Be careful! All your examples will be reset,
+          so you will have to start over if you want to make changes or add another gesture. To test the gestures, click "Test Model".</p>
+      </div>
+      <div class="col-4 align-self-center" style="text-align:center;">
+        <div class="row justify-content-center">
+          <h4 id="webcam-title">Gesture Preview</h4>
+        </div>
+        <div class="row justify-content-center">
+          <video autoplay playsinline muted class="webcam" id="video" width="224" height="224"></video>
+        </div>
+        <div class="row justify-content-center" style="margin-top:10px;">
+          <span id="error-text" class="alert alert-danger" role="alert" style="text-align:center;">Any errors will be reported here!</span>
+        </div>
       </div>
     </div>
-    <!-- TODO: information panel with how to use -->
-    <div id="row" style="text-align: center;"><span id="error-text" style="color: red; text-align: center;"></span></div>
-    <div class="row">
-      <div class="col-md-3 col-md-offset-3" style="text-align:center">
-        <button type="button" style="width:100%;" class="btn btn-primary" id="train">
-          <span id="train-status">Train Model</span>
+
+    <div class="row btn-panel">
+      <div id="gestures-dropdown" class="col-2 offset-md-3 align-self-center" style="text-align:center">
+          <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle btn-panel-btn btn-lg" type="button"id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Add gesture
+              </button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                <button class="dropdown-item" id="add-scroll-up" type="button">Scroll up</button>
+                <button class="dropdown-item" id="add-scroll-down" type="button">Scroll down</button>
+                <button class="dropdown-item" id="add-tab-prev" type="button">Prev tab</button>
+                <button class="dropdown-item" id="add-tab-next" type="button">Next tab</button>
+                <button class="dropdown-item" id="add-tab-close" type="button">Close tab</button>
+                <button class="dropdown-item" id="add-tab-new" type="button">New tab</button>
+              </div>
+            </div>
+      </div>
+      <div id="train-btn-col" class="col-2 align-self-center" style="text-align:center">
+        <button type="button" class="btn btn-primary btn-panel-btn btn-lg" id="train">
+          <span id="train-status">Start training</span>
         </button>
       </div>
-      <div class="col-md-3" style="text-align:center">
-        <button type="button" style="width:100%;" class="btn btn-success" id="test-model">Test Model</button>
+      <div class="col-2 align-self-center" style="text-align:center">
+        <button type="button" class="btn btn-success btn-panel-btn btn-lg" id="test-model">Test model</button>
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-4" style="text-align:center">
-        <div class="row">Scroll up</div>
-        <div class="row">
-          <canvas class="thumb" id="up-thumb" width="225px" height="225px"></canvas>
-        </div>
-        <div class="row">
-          <button type="button" class="btn btn-danger" id="up">Add Example</button>
-        </div>
-        <div class="row">
-          <span id="up-total">0 Examples</span>
-        </div>
-      </div>
-      <div class="col-md-4" style="text-align:center">
-        <div class="row">Do nothing</div>
-        <div class="row">
-          <canvas class="thumb" id="neutral-thumb" width="225px" height="225px"></canvas>
-        </div>
-        <div class="row">
-          <button type="button" class="btn btn-danger" id="neutral">Add Example</button>
-        </div>
-        <div class="row">
-          <span id="neutral-total">0 Examples</span>
-        </div>
-      </div>
-      <div class="col-md-4" style="text-align:center">
-        <div class="row">Scroll down</div>
-        <div class="row">
-          <canvas class="thumb" id="down-thumb" width="225px" height="225px"></canvas>
-        </div>
-        <div class="row">
-          <button type="button" class="btn btn-danger" id="down">Add Example</button>
-        </div>
-        <div class="row">
-          <span id="down-total">0 Examples</span>
-        </div>
+    <div id="gestures" class="row gestures-panel">
+      <div id="neutral-gesture" class="col-md-3">
+        <div class="row justify-content-center">Do nothing (Required)</div>
+        <div class="row justify-content-center"><canvas width="224px" height="224px" id="neutral-thumb"></canvas></div>
+        <div class="row justify-content-center"><button type="button" class="btn btn-danger hidden" id="neutral">Add Example</button></div>
+        <div class="row justify-content-center"><span id="neutral-total" class="hidden">0 Examples</span></div>
       </div>
     </div>
+
   </div>
-  </div>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 </body>
 </html>

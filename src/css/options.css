@@ -1,25 +1,51 @@
-body {
-  overflow: hidden;
+.container {
+  padding: 10px;
+  /* -webkit-box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
+  box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3); */
 }
 
-.vertical-center {
-  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
-  min-height: 100vh; /* These two lines are counted as one :-)       */
-
-  display: flex;
-  align-items: center;
+.info-box {
+  border-right: 1px solid #d3d3d3;
+  padding: 30px;
 }
-.thumb {
-  border: 2px solid #d3d3d3;
-  border-radius: 15px;
+
+.info-box p {
+  font-size: 14px;
+  margin-bottom: 0.6rem;
 }
 
 .webcam {
-  border: 2px solid #d3d3d3;
+  border: 1px solid #d3d3d3;
 }
 
-.row {
-  margin-top: 5px;
+.webcam-fixed {
+  position: fixed;
+  top: 0;
+  z-index: 9999;
+}
+
+.btn-panel {
+  height: 80px;
+}
+
+.btn-panel-btn {
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+.gestures-panel .row {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.gestures-panel canvas {
+  width: 224px;
+  height: 224px;
+  border: 1px solid #d3d3d3;
+  border-radius: 5px;
 }
 
 .loading {
@@ -44,14 +70,11 @@ body {
   top: 50%;
   left: 50%;
 
+  border-style: double;
+  border-color: #000 transparent;
   border-width: 30px;
   border-radius: 50%;
   -webkit-animation: spin 1s linear infinite;
-}
-
-.style-2 #spinner {
-  border-style: double;
-  border-color: #000 transparent;
 }
 
 @-webkit-keyframes spin {
