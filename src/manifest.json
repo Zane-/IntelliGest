@@ -18,8 +18,8 @@
 	  "declarativeContent",
 	  "activeTab",
 	  "tabs",
-	  "downloads"
+    "downloads"
   ],
   "manifest_version": 2,
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://code.jquery.com https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; object-src 'self'"
 }

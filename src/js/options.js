@@ -1,68 +1,203 @@
 import "../css/options.css";
 import {ControllerDataset} from './controller';
 import {Webcam} from './webcam';
-import * as ui from './training';
 
 import * as tf from '@tensorflow/tfjs';
 
-var video = document.getElementById('video');
-// The number of classes we want to predict. In this example, we will be
-// predicting 3 classes for scrolling up and down, and doing nothing
-const NUM_CLASSES = 3;
-
-// A webcam class that generates Tensors from the images from the webcam.
+const trainStatusElement = document.getElementById('train-status');
+const errorTextElement = document.getElementById('error-text');
+const gesturesElement = document.getElementById('gestures');
+const neutralGesture = document.getElementById('neutral-gesture');
+const neutralButton = document.getElementById('neutral');
+const trainButton = document.getElementById('train');
+trainButton.addEventListener('click', startTraining);
+const video = document.getElementById('video');
 const webcam = new Webcam(video);
 
-// The dataset object where we will store activations.
-const controllerDataset = new ControllerDataset(NUM_CLASSES);
-
+let gestures = ['neutral'];
+let totals = [0];
+let thumbDisplayed = {};
+let mouseDown = false;
+var controllers = [];
 let mnet;
 let mdl;
 
-// Loads mobilenet and returns a model that returns the internal activation
-// we'll use as input to our classifier model.
-async function loadMobilenet() {
-  const mobilenet = await tf.loadModel(
-    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+// add listeners to dropdown buttons to add component to gestures table
+document.getElementById('add-scroll-up').addEventListener('click', () => addGesture('scroll-up', 'Scroll up'));
+document.getElementById('add-scroll-down').addEventListener('click', () => addGesture('scroll-down', 'Scroll down'));
+document.getElementById('add-tab-prev').addEventListener('click', () => addGesture('tab-prev', 'Prev tab'));
+document.getElementById('add-tab-next').addEventListener('click', () => addGesture('tab-next', 'Next tab'));
+document.getElementById('add-tab-close').addEventListener('click', () => addGesture('tab-close', 'Close tab'));
+document.getElementById('add-tab-new').addEventListener('click', () => addGesture('tab-new', 'New tab'));
 
-  // Return a model that outputs an internal activation.
-  const layer = mobilenet.getLayer('conv_pw_13_relu');
-  return tf.model({
-    inputs: mobilenet.inputs,
-    outputs: layer.output
+document.getElementById('test-model').addEventListener('click', async() => {
+  try {
+    let model = await tf.loadModel('indexeddb://model-intelligest');
+    window.location = './demo.html';
+	} catch (e) {
+    window.scrollTo(0, 0);
+		setErrorText('No model saved, please train a model first.');
+  }
+});
+
+function checkWebcam() {
+  let offset = video.offsetTop;
+  if (window.pageYOffset > offset) {
+    setHidden('webcam-title', true);
+    errorTextElement.classList.add('hidden');
+    video.classList.add("webcam-fixed");
+  } else {
+    setHidden('webcam-title', false);
+    errorTextElement.classList.remove('hidden');
+    video.classList.remove("webcam-fixed");
+  }
+}
+
+function setHidden(element, bool) {
+  if (bool) {
+    document.getElementById(element).classList.add('hidden');
+  } else {
+    document.getElementById(element).classList.remove('hidden');
+  }
+}
+
+function setTrainStatus(status) {  
+  trainStatusElement.innerText = status;
+}
+
+function setErrorText(text) { 
+  errorTextElement.innerText = text;
+}
+
+function startTraining() {
+  let children = gesturesElement.childNodes;
+  if (children.length <= 3) {
+    window.scrollTo(0, 0);
+    setErrorText("Please add at least one other gesture.");
+    return;
+  }
+  setErrorText("No errors to report.");
+  // hide the dropdown to add gestures
+  setHidden("gestures-dropdown", true);
+  document.getElementById('train-btn-col').classList.add('offset-md-4');
+
+  let numGestures = gestures.length;
+  // unhide all the add example buttons
+  for (var i = 0; i < numGestures; i++) {
+    let id = gestures[i];
+    setHidden(id, false);
+    setHidden(id+'-total', false);
+    // skip neutral gesture because it already has these handlers
+    let elem = document.getElementById(id);
+    const labelIndex = i;
+    elem.addEventListener('mousedown', () => handler(labelIndex));
+    elem.addEventListener('mouseup', () => mouseDown = false);
+  }
+   
+  controllers.push(new ControllerDataset(numGestures));
+  trainButton.removeEventListener('click', this);
+  setTrainStatus("Train model");
+  
+  trainButton.addEventListener('click', async() =>  {
+    setErrorText('No errors to report.');
+    setTrainStatus('Training...');
+    await tf.nextFrame();
+    await tf.nextFrame();
+    await train();
+    setTrainStatus('Model saved');
+    chrome.storage.local.set({'intelligest-gestures': gestures}, function() {
+      console.log('Storing gestures configuration as ' + gestures);
+    });
   });
 }
 
-// When the UI buttons are pressed, read a frame from the webcam and associate
-// it with the class label given by the button. up, down, left, right are
-// labels 0, 1, 2, 3 respectively.
-ui.setExampleHandler(label => {
-  tf.tidy(() => {
-    const img = webcam.capture();
-    controllerDataset.addExample(mnet.predict(img), label);
+function addGesture(label, title) {
+  // clone the original neutral gesture
+  let newGesture = neutralGesture.cloneNode(true);
+  newGesture.id = label + '-gesture';
+  // array of the four rows in a gesture 
+  // set ids to the correct label
+  let rows = newGesture.childNodes;
+  rows[1].innerText = title;
+  rows[3].firstChild.id = label + '-thumb';
+  rows[5].firstChild.id = label;
+  rows[7].firstChild.id = label + '-total';
 
-    // Draw the preview thumbnail.
-    ui.drawThumb(img, label);
-  });
-});
+  gesturesElement.appendChild(newGesture);
+
+  gestures.push(label);
+  totals.push(0);
+  // remove gesture from dropdown list
+  let dropdownElement = document.getElementById('add-' + label);
+  dropdownElement.parentNode.removeChild(dropdownElement);
+}
+
+async function handler(label) {
+  mouseDown = true;
+  const className = gestures[label];
+  console.log(className);
+  console.log(label);
+  const button = document.getElementById(className);
+  const total = document.getElementById(className + '-total');
+  while (mouseDown) {
+    tf.tidy(() => {
+      const img = webcam.capture();
+      controllers[0].addExample(mnet.predict(img), label);
+      // Draw the preview thumbnail
+      drawThumb(img, label);
+    });
+    document.body.setAttribute('data-active', gestures[label]);
+    let text = (totals[label] == 1) ? " Example" : " Examples";
+    total.innerText = totals[label]++ + text;
+
+    await tf.nextFrame();
+  }
+  document.body.removeAttribute('data-active');
+}
+
+function drawThumb(img, label) {
+  if (thumbDisplayed[label] == null) {
+    const thumbCanvas = document.getElementById(gestures[label] + '-thumb');
+    draw(img, thumbCanvas);
+  }
+}
+
+function draw(image, canvas) {
+  const [width, height] = [224, 224];
+  const ctx = canvas.getContext('2d');
+  const imageData = new ImageData(width, height);
+  const data = image.dataSync();
+  for (let i = 0; i < height * width; ++i) {
+    const j = i * 4;
+    imageData.data[j + 0] = (data[i * 3 + 0] + 1) * 127;
+    imageData.data[j + 1] = (data[i * 3 + 1] + 1) * 127;
+    imageData.data[j + 2] = (data[i * 3 + 2] + 1) * 127;
+    imageData.data[j + 3] = 255;
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
 
 /**
  * Sets up and trains the classifier.
  */
 async function train() {
-  if (controllerDataset.xs == null) {
-    ui.trainStatus('Train Model');
-    ui.setErrorText('Add some examples before training!');  
+  if (controllers[0].xs == null) {
+    window.scrollTo(0, 0);
+    setTrainStatus('Train model');
+    setErrorText('Add some examples before training!');  
     throw new Error('Add some examples before training!');
   }
-  for (var i = 0; i < ui.totals.length; i++) {
-    if (ui.totals[i] == 0) {
-      ui.trainStatus('Train Model');
-      ui.setErrorText('Add at least one example for each action!');
-      throw new Error('Add at least one example for each action!');
+  for (var i = 0; i < totals.length; i++) {
+    if (totals[i] < 100) {
+      window.scrollTo(0, 0);
+      trainStatus('Train model');
+      setErrorText('Add at least 100 examples for each gesture!');
+      throw new Error('Add at least 100 examples for each gesture!');
+      break;
     }
   }
 
+  let units = gestures.length;
   // Creates a 2-layer fully connected model. By creating a separate model,
   // rather than adding layers to the mobilenet model, we "freeze" the weights
   // of the mobilenet model, and only train weights from the new model.
@@ -85,7 +220,7 @@ async function train() {
       // Layer 2. The number of units of the last layer should correspond
       // to the number of classes we want to predict.
       tf.layers.dense({
-        units: NUM_CLASSES,
+        units: units,
         kernelInitializer: 'varianceScaling',
         useBias: false,
         activation: 'softmax'
@@ -108,66 +243,25 @@ async function train() {
   // We parameterize batch size as a fraction of the entire dataset because the
   // number of examples that are collected depends onhow many examples the user
   // collects. This allows us to have a flexible batch size.
-  const batchSize = Math.floor(controllerDataset.xs.shape[0] * 0.4);
-  if (!(batchSize > 0)) {
-    throw new Error(
-      `Batch size is 0 or NaN. Please choose a non-zero fraction.`);
-  }
+  const batchSize = Math.floor(controllers[0].xs.shape[0] * 0.4);
 
-  // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
-  mdl.fit(controllerDataset.xs, controllerDataset.ys, {
+  mdl.fit(controllers[0].xs, controllers[0].ys, {
     batchSize,
-    epochs: 20
+    epochs: 60
   });
   await mdl.save('indexeddb://model-intelligest');
 }
 
-let isPredicting = false;
-
-async function predict() {
-  ui.isPredicting();
-  while (isPredicting) {
-    const predictedClass = tf.tidy(() => {
-      // Capture the frame from the webcam.
-      const img = webcam.capture();
-      // Make a prediction through mobilenet, getting the internal activation of
-      // the mobilenet model.
-      const activation = mnet.predict(img);
-      // Make a prediction through our newly-trained model using the activation
-      // from mobilenet as input.
-      const predictions = mdl.predict(activation);
-      // Returns the index with the maximum probability. This number corresponds
-      // to the class the model thinks is the most probable given the input.
-      return predictions.as1D().argMax();
-    });
-
-    const classId = (await predictedClass.data())[0];
-    predictedClass.dispose();
-
-    ui.predictClass(classId);
-    await tf.nextFrame();
-  }
-  ui.donePredicting();
+// Loads mobilenet and returns a model
+async function loadMobilenet() {
+  const mobilenet = await tf.loadModel(
+    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+  const layer = mobilenet.getLayer('conv_pw_13_relu');
+  return tf.model({
+    inputs: mobilenet.inputs,
+    outputs: layer.output
+  });
 }
-
-document.getElementById('train').addEventListener('click', async () => {
-  ui.setErrorText('');
-  ui.trainStatus('Training...');
-  await tf.nextFrame();
-  await tf.nextFrame();
-  isPredicting = false;
-  await train();
-  ui.trainStatus('Model saved')
-});
-
-document.getElementById('test-model').addEventListener('click', async() => {
-  try {
-    let model = await tf.loadModel('indexeddb://model-intelligest');
-    window.location = './demo.html';
-	} catch (e) {
-		ui.setErrorText('No model saved, please train a model to test it.');
-  }
-})
 
 async function init() {
   try {
@@ -176,13 +270,10 @@ async function init() {
    	alert('No webcam detected. You must have a webcam enabled to use this extension. Please enable a webcam and press "Ok"');
 		location.reload();
   }
-
   mnet = await loadMobilenet();
   // hide loading screen once mobilenet is loaded
-  document.getElementById('loading-overlay').style.display = 'none';
-  // Warm up the model. This uploads weights to the GPU and compiles the WebGL
-  // programs so the first time we collect data from the webcam it will be
-  // quick.
+  setHidden('loading-overlay', true);
+  window.onscroll = function() {checkWebcam()};
   tf.tidy(() => mnet.predict(webcam.capture()));
 }
 

@@ -1,22 +1,16 @@
 import * as tf from '@tensorflow/tfjs';
-import {
-	Webcam
-} from './webcam.js';
+import {Webcam} from './webcam';
+import {gestureActions} from './gestures';
 
 let model;
 let mobilenet;
+let gestures;
 
 var video = document.getElementById('video');
 const webcam = new Webcam(video);
 
-async function loadMobileNet() {
-	const mobile = await tf.loadModel(
-		'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
-	const layer = mobile.getLayer('conv_pw_13_relu');
-	return tf.model({
-		inputs: mobile.inputs,
-		outputs: layer.output
-	});
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function predict() {
@@ -31,42 +25,36 @@ async function predict() {
 		var probabilities = (await prediction.data());
 		var maxProb = Math.max(...probabilities);
 		var maxIndex = probabilities.indexOf(maxProb);
-		// threshold values for executing actions probability 
-		// must exceed the threshold for the given action to execute
-		const thresholds = [0.7, 0.5, 0.7];
-		if (maxProb >= thresholds[maxIndex]) {
-			switch (maxIndex) {
-				case 0:
-					// scroll up
-					window.scrollBy(0, -20);
-					break;
-				case 1:
-					// neutral gesture detected, do nothing
-					break;
-				case 2:
-					// scroll down
-					window.scrollBy(0, 20);
-					break;
-			}
-		}
+		console.log(probabilities);
+		// execute the action in index maxIndex in the stored gestures array
+		gestureActions[gestures[maxIndex]](maxProb);
 		prediction.dispose();
 		await tf.nextFrame();
 	}
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function loadModel() {
+async function loadConfig() {
 	try {
 		model = await tf.loadModel('indexeddb://model-intelligest');
+		chrome.storage.local.get(['intelligest-gestures'], function(value) {
+			gestures = value['intelligest-gestures'];
+		});
 	} catch (e) {
 		alert('No model saved, press "Ok" to be redirected to options...');
 		window.location = './options.html';
 	}
-	return model;
 }
+
+async function loadMobileNet() {
+	const mobile = await tf.loadModel(
+		'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+	const layer = mobile.getLayer('conv_pw_13_relu');
+	return tf.model({
+		inputs: mobile.inputs,
+		outputs: layer.output
+	});
+}
+
 async function init() {
 	try {
 		await webcam.setup();
@@ -74,11 +62,12 @@ async function init() {
 		alert('No webcam detected. You must have a webcam enabled to use this extension. Please enable a webcam and press "Ok"');
 		location.reload();
 	}
-	model = await loadModel();
+	await loadConfig();
 	mobilenet = await loadMobileNet();
 	// hide loader
 	document.getElementById('loading-overlay').style.display = 'none';
 
+	// warm up model
 	tf.tidy(() => mobilenet.predict(webcam.capture()));
 	predict();
 }
