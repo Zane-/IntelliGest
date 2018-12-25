@@ -16,6 +16,8 @@
  */
 import * as tf from '@tensorflow/tfjs';
 
+
+var imageData;
 /**
  * A class that wraps webcam video elements to capture Tensor4Ds.
  */
@@ -34,7 +36,8 @@ export class Webcam {
   capture() {
     return tf.tidy(() => {
       // Reads the image as a Tensor from the webcam <video> element.
-      const webcamImage = tf.fromPixels(this.webcamElement);
+
+      const webcamImage = tf.fromPixels(new ImageData(imageData));
 
       // Crop the image so we're using the center square of the rectangular
       // webcam.
@@ -84,23 +87,52 @@ export class Webcam {
           navigatorAny.webkitGetUserMedia || navigatorAny.mozGetUserMedia ||
           navigatorAny.msGetUserMedia;
       if (navigator.getUserMedia) {
-        navigator.getUserMedia(
-            {video: true},
-            stream => {
-              this.webcamElement.srcObject = stream;
-              this.webcamElement.addEventListener('loadeddata', async () => {
-                this.adjustVideoSize(
-                    this.webcamElement.videoWidth,
-                    this.webcamElement.videoHeight);
-                resolve();
-              }, false);
-            },
-            error => {
-              reject();
-            });
+        navigator.webkitGetUserMedia(options, function(stream) {
+          let recorder = new MediaRecorder(stream);
+          let arrayBuffer;
+          let fileReader = new FileReader();
+          fileReader.onload = function(event) {
+            arrayBuffer = event.target.result
+          }
+          recorder.ondataavailable = function(frame) {
+            fileReader.readAsArrayBuffer(frame.data);
+            imageData = new Uint8ClampedArray(arrayBuffer);
+          };
+          recorder.start(300);
+        }, function(e) {
+          alert(e);
+        });
       } else {
         reject();
       }
     });
   }
 }
+
+// var options = {
+//   video:true,
+//   audio:false
+// };
+
+// var arrayBuffer;
+// var fileReader = new FileReader();
+// fileReader.onload = function(event) {
+//   arrayBuffer = event.target.result;
+// };
+
+// navigator.webkitGetUserMedia(options, function(stream) {
+//   let recorder = new MediaRecorder(stream);
+//   let arrayBuffer;
+//   let fileReader = new FileReader();
+//   fileReader.onload = function(event) {
+//     arrayBuffer = event.target.result
+//   }
+//   recorder.ondataavailable = function(frame) {
+//     fileReader.readAsArrayBuffer(frame.data);
+//     let imageData= new Uint8ClampedArray(arrayBuffer);
+//     // now do something with the ImageData
+//   };
+//   recorder.start(300);
+// }, function(e) {
+//   alert(e);
+// });
